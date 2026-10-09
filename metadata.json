@@ -1,0 +1,6 @@
+{
+  "name": "MarketLab by Hexavora",
+  "description": "A browser-based educational stock-market paper-trading simulator with deterministic exchange engine, virtual trading accounts, and Academy progression.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

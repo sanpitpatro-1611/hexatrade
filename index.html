@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MarketLab by Hexavora | Simulated Indian Stock Market Terminal & Academy</title>
+    <meta name="description" content="A browser-based educational stock-market paper-trading simulator with deterministic exchange engine, virtual trading accounts, and Academy progression." />
+    <meta property="og:title" content="MarketLab by Hexavora" />
+    <meta property="og:description" content="A browser-based educational stock-market paper-trading simulator with deterministic exchange engine, virtual trading accounts, and Academy progression." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-brand">
+          <div class="logo-icon">H</div>
+          <span>MarketLab</span>
+          <span style="font-weight: 400; font-size: 11px; color: var(--text-muted);">by Hexavora</span>
+        </div>
+        <div class="badge-simulated" title="All companies, prices, orders and transactions are simulated for educational paper trading">
+          <span>●</span> SIMULATED MARKET
+        </div>
+      </div>
+
+      <div class="header-center">
+        <!-- Exchange Clock -->
+        <div class="sim-clock-panel">
+          <div class="clock-status-dot" id="clockDot"></div>
+          <span class="clock-text num" id="clockDisplay">09:15 AM IST | Day 1</span>
+          <span class="clock-status-tag open" id="marketStatusTag">OPEN</span>
+        </div>
+
+        <!-- Clock Controls -->
+        <div class="btn-group">
+          <button class="ctrl-btn" id="btnPlayPause" title="Play or Pause Simulation">⏸ Pause</button>
+          <button class="ctrl-btn active" id="btnSpeed1x" data-speed="1" title="Normal Speed (1x)">1x</button>
+          <button class="ctrl-btn" id="btnSpeed2x" data-speed="2" title="Fast (2x)">2x</button>
+          <button class="ctrl-btn" id="btnSpeed5x" data-speed="5" title="Very Fast (5x)">5x</button>
+          <button class="ctrl-btn" id="btnSpeed10x" data-speed="10" title="Ultra Fast (10x)">10x</button>
+          <button class="ctrl-btn" id="btnNextSession" title="Skip to Next Trading Session">⏭ Day</button>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- Google Workspace Sync Pill -->
+        <div id="googleAuthContainer" style="display: flex; align-items: center; gap: 8px;">
+          <button class="ctrl-btn" id="btnGoogleSyncQuick" style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 4px; padding: 4px 8px;" title="Google Drive & Sheets Integration">
+            <span style="color: var(--accent-cyan); font-weight: 700;">☁ Google Sync</span>
+          </button>
+        </div>
+
+        <!-- Account Pill -->
+        <div class="account-pill">
+          <div class="pill-item">
+            <span class="pill-label">Virtual Equity</span>
+            <span class="pill-value num text-green" id="headerEquity">₹10,000.00</span>
+          </div>
+          <div class="pill-item">
+            <span class="pill-label">Cash Avail.</span>
+            <span class="pill-value num" id="headerCash">₹10,000.00</span>
+          </div>
+          <div class="pill-item">
+            <span class="pill-label">Academy</span>
+            <span class="pill-value" style="color: var(--accent-blue);" id="headerAcademyLevel">Lvl 1</span>
+          </div>
+        </div>
+
+        <!-- Theme Toggle -->
+        <button class="theme-toggle-btn" id="btnThemeToggle" title="Toggle Light/Dark Theme">🌙</button>
+      </div>
+    </header>
+
+    <!-- Market Overview & Ticker Bar -->
+    <div class="market-ticker-bar">
+      <div class="ticker-metrics">
+        <div class="index-chip">
+          <span class="index-title">HEXA-50</span>
+          <span class="index-val num" id="indexValue">22,450.80</span>
+          <span class="index-change num text-green" id="indexChange">+68.40 (+0.31%)</span>
+        </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="market-stat">
+          <span class="market-stat-lbl">Breadth:</span>
+          <span class="market-stat-val num" id="marketBreadth">▲ 8 &nbsp; ▼ 5 &nbsp; ➖ 1</span>
+        </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="market-stat">
+          <span class="market-stat-lbl">Volume:</span>
+          <span class="market-stat-val num" id="marketVolume">1,48,290 shs</span>
+        </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="market-stat">
+          <span class="market-stat-lbl">Regime:</span>
+          <span class="market-stat-val" id="marketRegime" style="color: var(--color-green); font-weight: 700;">BULLISH</span>
+        </div>
+      </div>
+
+      <!-- Simulated Breaking News Marquee -->
+      <div class="ticker-news-marquee">
+        <span class="news-badge">NEWS</span>
+        <span class="news-headline-text" id="newsMarqueeText">Simulated Market opened in positive territory with robust bids across Tech & Renewable Energy.</span>
+      </div>
+    </div>
+
+    <!-- Main Workspace Grid -->
+    <main class="app-main-layout">
+      <!-- LEFT PANEL: WATCHLIST -->
+      <aside class="panel-watchlist">
+        <div class="watchlist-header">
+          <div class="watchlist-search-box">
+            <span>🔍</span>
+            <input type="text" id="watchlistSearch" placeholder="Search stock or sector..." />
+          </div>
+          <div class="sector-filters" id="sectorFilters">
+            <button class="filter-chip active" data-sector="ALL">All (14)</button>
+            <button class="filter-chip" data-sector="Technology">Tech</button>
+            <button class="filter-chip" data-sector="Banking">Banking</button>
+            <button class="filter-chip" data-sector="Energy">Energy</button>
+            <button class="filter-chip" data-sector="Healthcare">Health</button>
+            <button class="filter-chip" data-sector="FMCG">FMCG</button>
+            <button class="filter-chip" data-sector="Industrial">Industrials</button>
+          </div>
+        </div>
+
+        <ul class="watchlist-list" id="watchlistContainer">
+          <!-- Populated dynamically by script.js -->
+        </ul>
+      </aside>
+
+      <!-- CENTER PANEL: CHART & WORKSPACE TABS -->
+      <section class="panel-center-workspace">
+        <!-- Selected Stock Header Bar -->
+        <div class="stock-detail-bar">
+          <div class="stock-title-cluster">
+            <span class="stk-symbol" id="stkHeaderSymbol">HEXA</span>
+            <span class="stk-fullname" id="stkHeaderName">Hexavora Technologies Ltd</span>
+            <span class="stk-sector-badge" id="stkHeaderSector">AI & SaaS</span>
+          </div>
+
+          <div class="stk-stats-ribbon">
+            <div class="stk-stat-col">
+              <span class="stk-stat-lbl">LTP</span>
+              <span class="stk-stat-val num text-green" id="stkHeaderPrice">₹100.00</span>
+            </div>
+            <div class="stk-stat-col">
+              <span class="stk-stat-lbl">Change</span>
+              <span class="stk-stat-val num text-green" id="stkHeaderChange">+0.00 (0.00%)</span>
+            </div>
+            <div class="stk-stat-col">
+              <span class="stk-stat-lbl">Day Range</span>
+              <span class="stk-stat-val num" id="stkHeaderRange">₹98.50 - ₹102.20</span>
+            </div>
+            <div class="stk-stat-col">
+              <span class="stk-stat-lbl">Sim. Volume</span>
+              <span class="stk-stat-val num" id="stkHeaderVolume">24,500</span>
+            </div>
+            <div class="stk-stat-col">
+              <span class="stk-stat-lbl">P/E (Sim)</span>
+              <span class="stk-stat-val num" id="stkHeaderPE">28.4</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Chart Container -->
+        <div class="chart-container-box">
+          <div class="chart-toolbar">
+            <div class="chart-tools-left">
+              <button class="chart-tool-btn active" data-tf="1m">1m</button>
+              <button class="chart-tool-btn" data-tf="5m">5m</button>
+              <button class="chart-tool-btn" data-tf="15m">15m</button>
+              <button class="chart-tool-btn" data-tf="1d">1D</button>
+              <span style="color: var(--border-strong);">|</span>
+              <button class="chart-tool-btn active" id="btnChartCandles">Candles</button>
+              <button class="chart-tool-btn" id="btnChartLine">Line</button>
+            </div>
+            <div class="chart-tools-right">
+              <span style="font-size: 10px; color: var(--text-muted);" id="chartIndicatorSummary">MA(20) • Volume • Trade Markers</span>
+            </div>
+          </div>
+
+          <div class="canvas-wrapper" id="canvasWrapper">
+            <canvas id="marketChart"></canvas>
+            <div class="chart-crosshair-hud" id="chartHud" style="display: none;">
+              <span>O: <b class="num" id="hudOpen">-</b></span>
+              <span>H: <b class="num text-green" id="hudHigh">-</b></span>
+              <span>L: <b class="num text-red" id="hudLow">-</b></span>
+              <span>C: <b class="num" id="hudClose">-</b></span>
+              <span>Vol: <b class="num" id="hudVol">-</b></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lower Workspace Tabs -->
+        <div class="panel-lower-tabs">
+          <nav class="lower-tab-nav" id="lowerNavTabs">
+            <button class="tab-btn active" data-tab="tab-holdings">Holdings <span class="tab-badge" id="badgeHoldings">0</span></button>
+            <button class="tab-btn" data-tab="tab-orders">Open Orders <span class="tab-badge" id="badgeOrders">0</span></button>
+            <button class="tab-btn" data-tab="tab-orderhistory">Order History</button>
+            <button class="tab-btn" data-tab="tab-ledger">Transaction Ledger</button>
+            <button class="tab-btn" data-tab="tab-journal">Trading Journal</button>
+            <button class="tab-btn" data-tab="tab-analytics">Performance & Analytics</button>
+            <button class="tab-btn" data-tab="tab-ipo">Hexavora IPO <span class="tab-badge" style="background: var(--color-amber); color: #000;">HOT</span></button>
+            <button class="tab-btn" data-tab="tab-academy">The Academy (7 Lvl)</button>
+            <button class="tab-btn" data-tab="tab-sync">Google Drive & Sheets Sync</button>
+          </nav>
+
+          <div class="lower-tab-content">
+            <!-- TAB: HOLDINGS -->
+            <div class="tab-pane active" id="tab-holdings">
+              <table class="data-table" id="holdingsTable">
+                <thead>
+                  <tr>
+                    <th>Stock</th>
+                    <th>Qty</th>
+                    <th>Avg Buy Price</th>
+                    <th>LTP</th>
+                    <th>Cur. Value</th>
+                    <th>P&L</th>
+                    <th>P&L %</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="holdingsTableBody">
+                  <!-- Injected via script.js -->
+                </tbody>
+              </table>
+              <div class="empty-state" id="emptyHoldings" style="display: none;">
+                <span>📦 No open share holdings</span>
+                <span style="font-size: 11px;">Place a BUY order using the ticket on the right to acquire simulated shares.</span>
+              </div>
+            </div>
+
+            <!-- TAB: OPEN ORDERS -->
+            <div class="tab-pane" id="tab-orders">
+              <table class="data-table" id="openOrdersTable">
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Time</th>
+                    <th>Stock</th>
+                    <th>Side</th>
+                    <th>Type</th>
+                    <th>Limit Price</th>
+                    <th>Qty</th>
+                    <th>Filled</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="openOrdersTableBody"></tbody>
+              </table>
+              <div class="empty-state" id="emptyOrders" style="display: none;">
+                <span>⏳ No pending orders open in the exchange book.</span>
+              </div>
+            </div>
+
+            <!-- TAB: ORDER HISTORY -->
+            <div class="tab-pane" id="tab-orderhistory">
+              <table class="data-table" id="orderHistoryTable">
+                <thead>
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Time</th>
+                    <th>Stock</th>
+                    <th>Side</th>
+                    <th>Type</th>
+                    <th>Price</th>
+                    <th>Qty</th>
+                    <th>Filled</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="orderHistoryTableBody"></tbody>
+              </table>
+            </div>
+
+            <!-- TAB: TRANSACTION LEDGER -->
+            <div class="tab-pane" id="tab-ledger">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 10px; color: var(--text-muted);">Audit-trail of all executed transactions and simulated charges. Reconciled with virtual cash.</span>
+                <div style="display: flex; gap: 6px;">
+                  <button class="btn-table-action" id="btnExportCSV">Download CSV</button>
+                  <button class="btn-table-action btn-buy-more" id="btnExportSheetsQuick">Export to Google Sheets</button>
+                </div>
+              </div>
+              <table class="data-table" id="ledgerTable">
+                <thead>
+                  <tr>
+                    <th>Tx ID</th>
+                    <th>Time</th>
+                    <th>Type</th>
+                    <th>Stock</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Charges</th>
+                    <th>Net Amount</th>
+                    <th>Realised P&L</th>
+                    <th>Cash Balance</th>
+                  </tr>
+                </thead>
+                <tbody id="ledgerTableBody"></tbody>
+              </table>
+            </div>
+
+            <!-- TAB: TRADING JOURNAL -->
+            <div class="tab-pane" id="tab-journal">
+              <div class="journal-log-form">
+                <input type="text" id="journalNoteInput" placeholder="Enter trade thesis, mistake analysis, or market observation..." />
+                <select id="journalTagSelect">
+                  <option value="Breakout">Breakout Trade</option>
+                  <option value="Value">Value Buy</option>
+                  <option value="Momentum">Momentum Follow</option>
+                  <option value="Discipline Check">Risk Discipline</option>
+                  <option value="Mistake">Trading Error</option>
+                </select>
+                <button class="btn-secondary" id="btnAddJournalNote">+ Add Note</button>
+              </div>
+              <table class="data-table" id="journalTable">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Tag</th>
+                    <th>Stock</th>
+                    <th>Trade Summary</th>
+                    <th>User Thesis & Reflection</th>
+                  </tr>
+                </thead>
+                <tbody id="journalTableBody"></tbody>
+              </table>
+            </div>
+
+            <!-- TAB: PERFORMANCE & ANALYTICS -->
+            <div class="tab-pane" id="tab-analytics">
+              <div class="analytics-kpi-grid">
+                <div class="kpi-card">
+                  <span class="kpi-title">Initial Capital</span>
+                  <span class="kpi-num num">₹10,000.00</span>
+                  <span class="kpi-sub">Day 1 Base</span>
+                </div>
+                <div class="kpi-card">
+                  <span class="kpi-title">Total Equity</span>
+                  <span class="kpi-num num text-green" id="kpiEquity">₹10,000.00</span>
+                  <span class="kpi-sub" id="kpiNetReturn">+0.00%</span>
+                </div>
+                <div class="kpi-card">
+                  <span class="kpi-title">Realised P&L</span>
+                  <span class="kpi-num num" id="kpiRealisedPnL">₹0.00</span>
+                  <span class="kpi-sub">Closed Trades</span>
+                </div>
+                <div class="kpi-card">
+                  <span class="kpi-title">Unrealised P&L</span>
+                  <span class="kpi-num num" id="kpiUnrealisedPnL">₹0.00</span>
+                  <span class="kpi-sub">Open Positions</span>
+                </div>
+                <div class="kpi-card">
+                  <span class="kpi-title">Win Rate</span>
+                  <span class="kpi-num num" id="kpiWinRate">0.0%</span>
+                  <span class="kpi-sub" id="kpiTradeCount">0 trades</span>
+                </div>
+                <div class="kpi-card">
+                  <span class="kpi-title">Max Drawdown</span>
+                  <span class="kpi-num num text-red" id="kpiMaxDrawdown">0.00%</span>
+                  <span class="kpi-sub">Peak-to-Trough</span>
+                </div>
+                <div class="kpi-card">
+                  <span class="kpi-title">Sim. Charges Paid</span>
+                  <span class="kpi-num num" id="kpiCharges">₹0.00</span>
+                  <span class="kpi-sub">STT / GST / Brokerage</span>
+                </div>
+              </div>
+
+              <!-- Equity Curve Canvas -->
+              <div style="font-size: 11px; font-weight: 700; margin-bottom: 4px; color: var(--text-secondary);">Virtual Equity Progression Curve vs Benchmark</div>
+              <canvas class="analytics-chart-canvas" id="equityCurveCanvas"></canvas>
+            </div>
+
+            <!-- TAB: HEXAVORA IPO -->
+            <div class="tab-pane" id="tab-ipo">
+              <div class="ipo-portal-box">
+                <div class="ipo-banner-card">
+                  <div class="ipo-brand-info">
+                    <h2>Hexavora Technologies IPO (Simulated)</h2>
+                    <p>Enterprise Multi-Agent Orchestration & Adaptive SaaS Platform</p>
+                    <div style="margin-top: 8px; font-size: 11px; color: #cbd5e1;">
+                      Issue Price: <b class="num text-green">₹100</b> &bull; Lot Size: <b class="num">50 shares (₹5,000)</b> &bull; Issue Size: <b>10,00,000 Shares (₹10 Cr)</b>
+                    </div>
+                  </div>
+                  <div>
+                    <span class="clock-status-tag" id="ipoStatusBadge" style="background: var(--accent-blue); color: #fff; font-size: 11px; padding: 4px 10px;">STAGE 1: ANNOUNCEMENT</span>
+                  </div>
+                </div>
+
+                <!-- 5 Stage Stepper -->
+                <div class="ipo-stage-stepper">
+                  <div class="stage-step active" id="ipoStep1">
+                    <div class="step-circle">1</div>
+                    <span class="step-label">Announcement</span>
+                  </div>
+                  <div class="stage-step" id="ipoStep2">
+                    <div class="step-circle">2</div>
+                    <span class="step-label">Subscription</span>
+                  </div>
+                  <div class="stage-step" id="ipoStep3">
+                    <div class="step-circle">3</div>
+                    <span class="step-label">Allotment</span>
+                  </div>
+                  <div class="stage-step" id="ipoStep4">
+                    <div class="step-circle">4</div>
+                    <span class="step-label">Listing (Day 5)</span>
+                  </div>
+                  <div class="stage-step" id="ipoStep5">
+                    <div class="step-circle">5</div>
+                    <span class="step-label">Secondary Trading</span>
+                  </div>
+                </div>
+
+                <div class="ipo-action-grid">
+                  <div class="ipo-financials-table">
+                    <h4 style="font-size: 12px; margin-bottom: 6px; color: var(--text-primary);">Fictional Company Financial Snapshot (Educational Model)</h4>
+                    <p style="color: var(--text-secondary); margin-bottom: 10px;">
+                      Hexavora develops autonomous enterprise agents. Revenue grew 185% YoY in FY25 with EBITDA margin of 32%.
+                      Funds raised will be allocated to R&D cluster infrastructure and global enterprise sales teams.
+                    </p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 11px;">
+                      <div class="kpi-card">
+                        <span class="kpi-title">FY25 Revenue</span>
+                        <span class="kpi-num num">₹38.2 Cr</span>
+                      </div>
+                      <div class="kpi-card">
+                        <span class="kpi-title">Net Profit</span>
+                        <span class="kpi-num num">₹12.4 Cr</span>
+                      </div>
+                      <div class="kpi-card">
+                        <span class="kpi-title">Post-Issue P/E</span>
+                        <span class="kpi-num num">22.5x</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="ipo-apply-card">
+                    <h4 style="font-size: 12px; color: var(--text-primary);">Retail Bid Application</h4>
+                    <p style="font-size: 10px; color: var(--text-muted);">Bidding reserves virtual cash in your account without debiting until allotment.</p>
+
+                    <div class="ticket-form-group">
+                      <label class="ticket-label">Select Lots (50 shs / lot)</label>
+                      <select id="ipoLotsSelect" style="background: var(--bg-input); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 6px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700;">
+                        <option value="1">1 Lot (50 shares = ₹5,000)</option>
+                        <option value="2">2 Lots (100 shares = ₹10,000)</option>
+                      </select>
+                    </div>
+
+                    <div style="font-size: 11px; margin: 4px 0;">
+                      Application Status: <b id="ipoApplicationStatusText" style="color: var(--color-amber);">Open for Bidding (Day 2 to Day 4)</b>
+                    </div>
+
+                    <button class="btn-place-order buy" id="btnApplyIPO">Apply for IPO</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB: THE ACADEMY -->
+            <div class="tab-pane" id="tab-academy">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div>
+                  <h3 style="font-size: 13px; font-weight: 700;">MarketLab Trader Academy — 7 Locked Mastery Levels</h3>
+                  <p style="font-size: 11px; color: var(--text-secondary);">Master each phase with risk discipline, order precision, and practical challenges. Pass mark 80/100.</p>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <span style="font-size: 11px; color: var(--text-muted);">Current Mastery Score:</span>
+                  <span class="pill-value num text-green" id="academyMasteryScore">85 / 100</span>
+                </div>
+              </div>
+
+              <div class="academy-grid" id="academyCardsContainer">
+                <!-- Injected via script.js -->
+              </div>
+            </div>
+
+            <!-- TAB: GOOGLE DRIVE & SHEETS SYNC + BACKUP -->
+            <div class="tab-pane" id="tab-sync">
+              <div class="sync-view-grid">
+                <!-- Google Workspace Card -->
+                <div class="sync-card">
+                  <h3>☁ Google Workspace Integration</h3>
+                  <p>
+                    Connect your Google account to back up simulation states directly to <b>Google Drive</b>
+                    and export complete ledger statements & trading journals to <b>Google Sheets</b>.
+                  </p>
+
+                  <div id="googleAuthSection" style="margin-top: 6px;">
+                    <!-- Google Sign-in button or user profile -->
+                    <button class="gsi-material-button" id="btnGoogleSignIn">
+                      <div class="gsi-material-button-icon">
+                        <svg viewBox="0 0 48 48" style="display: block;">
+                          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                        </svg>
+                      </div>
+                      <span>Sign in with Google</span>
+                    </button>
+                    <div id="googleUserStatus" style="display: none; margin-top: 8px;">
+                      <div style="font-size: 11px; color: var(--text-primary); font-weight: 600;" id="googleUserEmail">Signed in</div>
+                      <button class="btn-table-action" id="btnGoogleSignOut" style="margin-top: 4px;">Sign Out</button>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                    <button class="btn-secondary" id="btnSyncGoogleDrive">📁 Save Backup to Google Drive</button>
+                    <button class="btn-secondary" id="btnSyncGoogleSheets">📊 Export Ledger to Google Sheets</button>
+                  </div>
+                  <div id="googleSyncFeedback" style="font-size: 10px; color: var(--accent-cyan);"></div>
+                </div>
+
+                <!-- Local File Backup & Recovery -->
+                <div class="sync-card">
+                  <h3>💾 Local Offline Backup & Import</h3>
+                  <p>
+                    All simulation state is preserved automatically in browser storage (IndexedDB).
+                    Export your complete portfolio, orders, ledger, and Academy progress to a JSON backup file.
+                  </p>
+
+                  <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button class="btn-secondary" id="btnDownloadJSON">Export JSON Backup</button>
+                    <button class="btn-secondary" id="btnTriggerImport">Import JSON Backup</button>
+                    <input type="file" id="importFileInput" accept=".json" style="display: none;" />
+                  </div>
+
+                  <div style="border-top: 1px solid var(--border-subtle); padding-top: 10px; margin-top: auto;">
+                    <h4 style="font-size: 11px; color: var(--color-red); margin-bottom: 4px;">Reset Account & Simulation</h4>
+                    <p style="font-size: 10px; color: var(--text-muted);">
+                      Resets virtual cash back to ₹10,000, clears orders, ledger, and restarts the market day.
+                    </p>
+                    <button class="btn-danger" id="btnResetAccount" style="margin-top: 6px;">Reset Account to ₹10,000</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT PANEL: ORDER BOOK & ORDER TICKET -->
+      <aside class="panel-order-dock">
+        <!-- Market Depth (Level 2) Widget -->
+        <div class="widget-orderbook">
+          <div class="widget-title">
+            <span>Market Depth</span>
+            <span style="font-size: 9px; color: var(--text-muted);">Level 2 (Simulated)</span>
+          </div>
+
+          <div class="orderbook-grid">
+            <!-- Bids Column -->
+            <div class="book-bids">
+              <div class="book-col-header">
+                <span>Bid Qty</span>
+                <span>Price</span>
+              </div>
+              <div id="orderbookBidsList">
+                <!-- Injected via script.js -->
+              </div>
+            </div>
+
+            <!-- Asks Column -->
+            <div class="book-asks">
+              <div class="book-col-header">
+                <span>Price</span>
+                <span>Ask Qty</span>
+              </div>
+              <div id="orderbookAsksList">
+                <!-- Injected via script.js -->
+              </div>
+            </div>
+
+            <!-- Spread Row -->
+            <div class="book-spread-row" id="orderbookSpread">
+              Spread: ₹0.15 (0.15%) &bull; Bid Vol: 1,420 &bull; Ask Vol: 1,890
+            </div>
+          </div>
+        </div>
+
+        <!-- Order Placement Ticket -->
+        <div class="widget-ticket">
+          <!-- Buy / Sell Tabs -->
+          <div class="ticket-side-tabs">
+            <button class="side-tab-btn buy active" id="tabOrderBuy">BUY</button>
+            <button class="side-tab-btn sell" id="tabOrderSell">SELL</button>
+          </div>
+
+          <!-- Market / Limit Tabs -->
+          <div class="ticket-type-tabs">
+            <button class="type-tab-btn active" id="tabOrderMarket">MARKET</button>
+            <button class="type-tab-btn" id="tabOrderLimit">LIMIT</button>
+          </div>
+
+          <!-- Quantity Input -->
+          <div class="ticket-form-group">
+            <label class="ticket-label">
+              <span>Quantity (Shares)</span>
+              <span id="ticketQtyHint" style="color: var(--text-muted);">Max: 100</span>
+            </label>
+            <div class="ticket-input-wrap">
+              <input type="number" id="ticketQty" min="1" step="1" value="10" />
+              <span class="ticket-input-suffix">SHS</span>
+            </div>
+          </div>
+
+          <!-- Price Input (Disabled for Market) -->
+          <div class="ticket-form-group" id="ticketPriceGroup" style="opacity: 0.5;">
+            <label class="ticket-label">
+              <span>Limit Price (₹)</span>
+              <span style="color: var(--text-muted);">LTP: <b class="num" id="ticketLtpRef">₹100.00</b></span>
+            </label>
+            <div class="ticket-input-wrap">
+              <input type="number" id="ticketPrice" step="0.05" value="100.00" disabled />
+              <span class="ticket-input-suffix">INR</span>
+            </div>
+          </div>
+
+          <!-- Order Cost & Charges Breakdown -->
+          <div class="ticket-summary-box">
+            <div class="summary-row">
+              <span>Gross Order Value</span>
+              <span class="num" id="ticketGrossVal">₹1,000.00</span>
+            </div>
+            <div class="summary-row">
+              <span>Sim. Charges (STT+GST+Exch)</span>
+              <span class="num" id="ticketChargesVal">₹0.30</span>
+            </div>
+            <div class="summary-row total">
+              <span>Estimated Required Cash</span>
+              <span class="num text-green" id="ticketTotalVal">₹1,000.30</span>
+            </div>
+          </div>
+
+          <!-- Submit Order Button -->
+          <button class="btn-place-order buy" id="btnPlaceOrder">BUY 10 SHS</button>
+
+          <!-- Available Balance Note -->
+          <div class="ticket-balance-hint">
+            Available Virtual Cash: <b class="num" id="ticketAvailCash">₹10,000.00</b>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- LESSON & QUIZ MODAL -->
+    <div class="modal-backdrop" id="lessonModal">
+      <div class="modal-window">
+        <div class="modal-header">
+          <div class="modal-title" id="modalLessonTitle">Level 1 — Market Foundations</div>
+          <button class="modal-close-btn" id="btnCloseLessonModal">&times;</button>
+        </div>
+        <div class="modal-body" id="modalLessonBody">
+          <!-- Populated dynamically -->
+        </div>
+        <div class="modal-footer" id="modalLessonFooter">
+          <button class="btn-secondary" id="btnCancelLesson">Close</button>
+          <button class="btn-place-order buy" style="padding: 6px 14px; font-size: 11px;" id="btnSubmitQuiz">Submit Assessment</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST NOTIFICATIONS CONTAINER -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- MAIN APP SCRIPT -->
+    <script type="module" src="./script.js"></script>
+  </body>
+</html>
